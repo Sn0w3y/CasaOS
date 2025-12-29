@@ -308,55 +308,59 @@ func GetNoDuplicateFileName(fullPath string) string {
 	return fullPath
 }
 
-// Dir copies a whole directory recursively
+// CopyDir copies a whole directory recursively
 func CopyDir(src, dst, style string) error {
-	var err error
-	var fds []os.FileInfo
-	var srcinfo os.FileInfo
-
-	if srcinfo, err = os.Stat(src); err != nil {
+	srcinfo, err := os.Stat(src)
+	if err != nil {
 		return err
 	}
+
+	// If source is a file, copy it directly
 	if !srcinfo.IsDir() {
-		if err = CopyFile(src, dst, style); err != nil {
-			fmt.Println(err)
-		}
+		return CopyFile(src, dst, style)
+	}
+
+	// Build destination path
+	lastPath := src[strings.LastIndex(src, "/")+1:]
+	dst = dst + "/" + lastPath
+
+	// Handle existing destination
+	if Exists(dst) && style == "skip" {
 		return nil
 	}
-	// dstPath := dst
-	lastPath := src[strings.LastIndex(src, "/")+1:]
-	dst += "/" + lastPath
-	// for i := 0; Exists(dst); i++ {
-	// 	dst = dstPath + "/" + lastPath + strconv.Itoa(i+1)
-	// }
 	if Exists(dst) {
-		if style == "skip" {
-			return nil
-		} else {
-			os.Remove(dst)
-		}
+		os.Remove(dst)
 	}
+
 	if err = os.MkdirAll(dst, srcinfo.Mode()); err != nil {
 		return err
 	}
-	if fds, err = readDirInfo(src); err != nil {
+
+	return copyDirContents(src, dst, style)
+}
+
+// copyDirContents copies the contents of a directory
+func copyDirContents(src, dst, style string) error {
+	fds, err := readDirInfo(src)
+	if err != nil {
 		return err
 	}
+
 	for _, fd := range fds {
 		srcfp := path.Join(src, fd.Name())
-		dstfp := dst // path.Join(dst, fd.Name())
-
-		if fd.IsDir() {
-			if err = CopyDir(srcfp, dstfp, style); err != nil {
-				fmt.Println(err)
-			}
-		} else {
-			if err = CopyFile(srcfp, dstfp, style); err != nil {
-				fmt.Println(err)
-			}
+		if err := copyEntry(srcfp, dst, style, fd.IsDir()); err != nil {
+			return err
 		}
 	}
 	return nil
+}
+
+// copyEntry copies a single file or directory entry
+func copyEntry(srcfp, dst, style string, isDir bool) error {
+	if isDir {
+		return CopyDir(srcfp, dst, style)
+	}
+	return CopyFile(srcfp, dst, style)
 }
 
 func WriteToPath(data []byte, path, name string) error {

@@ -61,6 +61,12 @@ type FsListResp struct {
 	Size     int       `json:"size"`
 }
 
+// HTTP header constants
+const (
+	headerContentDisposition = "Content-Disposition"
+	attachmentPrefix         = "attachment; filename*=utf-8''"
+)
+
 // upgraderFile handles WebSocket protocol upgrade
 // Note: CheckOrigin allows localhost connections for local development
 var upgraderFile = websocket.Upgrader{
@@ -188,7 +194,7 @@ func GetDownloadFile(ctx echo.Context) error {
 
 			// 获取文件的名称
 			fileName := path.Base(filePath)
-			ctx.Response().Header().Add("Content-Disposition", "attachment; filename*=utf-8''"+url.PathEscape(fileName))
+			ctx.Response().Header().Add(headerContentDisposition, attachmentPrefix+url.PathEscape(fileName))
 			ctx.File(filePath)
 		}
 	}
@@ -216,7 +222,7 @@ func GetDownloadFile(ctx echo.Context) error {
 
 	name := "_" + currentPath
 	name += extension
-	ctx.Request().Header.Add("Content-Disposition", "attachment; filename*=utf-8''"+url.PathEscape(name))
+	ctx.Request().Header.Add(headerContentDisposition, attachmentPrefix+url.PathEscape(name))
 	for _, fname := range list {
 		err = file.AddFile(ar, fname, commonDir)
 		if err != nil {
@@ -235,12 +241,14 @@ func GetDownloadSingleFile(ctx echo.Context) error {
 		})
 	}
 	fileName := path.Base(filePath)
-	// c.Header("Content-Disposition", "inline")
-	ctx.Request().Header.Add("Content-Disposition", "attachment; filename*=utf-8''"+url.PathEscape(fileName))
+	ctx.Request().Header.Add(headerContentDisposition, attachmentPrefix+url.PathEscape(fileName))
 
 	fi, err := os.Open(filePath)
 	if err != nil {
-		panic(err)
+		return ctx.JSON(common_err.SERVICE_ERROR, model.Result{
+			Success: common_err.FILE_DOES_NOT_EXIST,
+			Message: common_err.GetMsg(common_err.FILE_DOES_NOT_EXIST),
+		})
 	}
 
 	// We only have to pass the file header = first 261 bytes
