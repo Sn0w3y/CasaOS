@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"io/ioutil"
-	"log"
 	"mime/multipart"
 	"os"
 	"path"
@@ -22,7 +20,7 @@ import (
 
 // GetSize get the file size
 func GetSize(f multipart.File) (int, error) {
-	content, err := ioutil.ReadAll(f)
+	content, err := io.ReadAll(f)
 	return len(content), err
 }
 

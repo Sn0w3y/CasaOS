@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"runtime"
@@ -321,12 +320,9 @@ func GetSystemProxy(ctx echo.Context) error {
 	for k, v := range ctx.Request().Header {
 		ctx.Request().Header.Add(k, v[0])
 	}
-	rda, _ := ioutil.ReadAll(resp.Body)
-	//	json.NewEncoder(c.Writer).Encode(json.RawMessage(string(rda)))
-	// 响应状态码
+	rda, _ := io.ReadAll(resp.Body)
 	ctx.Response().Writer.WriteHeader(resp.StatusCode)
-	// 复制转发的响应Body到响应Body
-	io.Copy(ctx.Response().Writer, ioutil.NopCloser(bytes.NewBuffer(rda)))
+	io.Copy(ctx.Response().Writer, io.NopCloser(bytes.NewBuffer(rda)))
 	return nil
 }
 
