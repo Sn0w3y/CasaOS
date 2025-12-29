@@ -4,7 +4,7 @@ package main
 
 import (
 	"context"
-	_ "embed"
+	_ "embed" // Required for //go:embed directives to work
 	"flag"
 	"fmt"
 	"net"

@@ -43,27 +43,25 @@ var (
 )
 
 // InitSetup initializes settings and retrieves part of the system information.
-func InitSetup(config string, sample string) error {
+func InitSetup(config, sample string) error {
 	ConfigFilePath = CasaOSConfigFilePath
 	if len(config) > 0 {
 		ConfigFilePath = config
 	}
 
-	// create default config file if not exist
-	if _, err := os.Stat(ConfigFilePath); os.IsNotExist(err) {
-		fmt.Println("config file not exist, creating it")
-		file, err := os.Create(ConfigFilePath)
-		if err != nil {
-			return fmt.Errorf("failed to create config file: %w", err)
-		}
+	// Atomically create config file if it doesn't exist (O_EXCL prevents race condition)
+	file, err := os.OpenFile(ConfigFilePath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
+	if err == nil {
+		// File was created, write default config
 		defer file.Close()
-
 		if _, err = file.WriteString(sample); err != nil {
 			return fmt.Errorf("failed to write default config: %w", err)
 		}
+	} else if !os.IsExist(err) {
+		// Error other than "file exists"
+		return fmt.Errorf("failed to create config file: %w", err)
 	}
 
-	var err error
 	Cfg, err = ini.Load(ConfigFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to load config file: %w", err)

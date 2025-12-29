@@ -163,7 +163,7 @@ func PutCasaOSPort(ctx echo.Context) error {
 // @Security ApiKeyAuth
 // @Success 200 {string} string "ok"
 // @Router /sys/restart [post]
-func PostKillCasaOS(ctx echo.Context) error {
+func PostKillCasaOS(_ echo.Context) error {
 	os.Exit(0)
 	return nil
 }

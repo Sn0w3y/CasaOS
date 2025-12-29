@@ -41,7 +41,7 @@ func ZTGet(url string) ([]byte, error) {
 	return respBody, nil
 }
 
-func ZTPost(url string, body string) ([]byte, error) {
+func ZTPost(url, body string) ([]byte, error) {
 	port, err := os.ReadFile("/var/lib/zerotier-one/zerotier-one.port")
 	if err != nil {
 		return nil, err
